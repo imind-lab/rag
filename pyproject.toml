@@ -1,0 +1,23 @@
+[project]
+name = "imind-rag"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [{ name = "songli", email = "songli@lenovo-ar.com" }]
+requires-python = ">=3.13"
+dependencies = [
+    "llama-index>=0.12.40",
+    "llama-index-embeddings-fastembed>=0.3.2",
+    "llama-index-llms-ollama>=0.6.2",
+    "llama-index-llms-openai-like>=0.4.0",
+    "llama-index-utils-workflow>=0.3.2",
+    "llama-index-vector-stores-qdrant>=0.6.0",
+    "pydantic-settings>=2.9.1",
+]
+
+[project.scripts]
+imind-rag = "imind_rag:main"
+
+[build-system]
+requires = ["uv_build>=0.7.12,<0.8"]
+build-backend = "uv_build"

@@ -1,0 +1,23 @@
+llm:
+  provider: vllm
+  model_name: Qwen2.5-7B-Instruct-AWQ
+  base_url: http://10.10.1.75:8000/v1
+  api_key: imind
+  kwargs:
+    temperature: 0.1
+
+embedding:
+  chunk_size: 512
+  chunk_overlap: 50
+  dense:
+    provider: transformers
+    model_name: BAAI/bge-small-zh-v1.5
+  sparse:
+    provider: transformers
+    model_name: Qdrant/bm25
+
+vector_store:
+  provider: qdrant
+  collection_name: imind_rag_index
+  host: localhost
+  port: 6333

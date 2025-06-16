@@ -1,4 +1,5 @@
 from llama_index.core import VectorStoreIndex
+from llama_index.core.indices.query.query_transform import HyDEQueryTransform
 from llama_index.core.postprocessor.llm_rerank import LLMRerank
 from llama_index.core.postprocessor import MetadataReplacementPostProcessor
 from llama_index.core.response_synthesizers import CompactAndRefine
@@ -18,16 +19,23 @@ class QueryingWorkflow(RAGWorkflow):
         super().__init__()
 
     @step
-    async def query_rewrite(self, ctx: Context, ev: StartEvent) -> QueryRewriteEvent:
-        pass
-
-    @step
-    async def retrieve(self, ctx: Context, ev: StartEvent) -> RetrieveEvent | None:
+    async def query_rewrite(
+        self, ctx: Context, ev: StartEvent
+    ) -> QueryRewriteEvent | None:
         query = ev.get("query")
         if not query:
             return None
 
-        await ctx.set("query", query)
+        hyde = HyDEQueryTransform(include_original=True)
+        query_bundle = hyde(ev.query)
+        print(f"query_bundle embedding len: {len(query_bundle.embedding_strs)}")
+        new_query = query_bundle.embedding_strs[0]
+        await ctx.set("query", new_query)
+        return QueryRewriteEvent()
+
+    @step
+    async def retrieve(self, ctx: Context, ev: StartEvent) -> RetrieveEvent:
+        query = await ctx.get("query", default=None)
 
         index = VectorStoreIndex.from_vector_store(
             self.vector_store, storage_context=self.storage_context

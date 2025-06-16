@@ -1,10 +1,16 @@
 from llama_index.core import VectorStoreIndex
 from llama_index.core.postprocessor.llm_rerank import LLMRerank
+from llama_index.core.postprocessor import MetadataReplacementPostProcessor
 from llama_index.core.response_synthesizers import CompactAndRefine
 from llama_index.core.workflow import Context, StartEvent, StopEvent, step
 
 from .base import RAGWorkflow
-from .event import RerankEvent, RetrieverEvent
+from .event import (
+    RerankEvent,
+    RetrieveEvent,
+    QueryRewriteEvent,
+    MetadataReplacementEvent,
+)
 
 
 class QueryingWorkflow(RAGWorkflow):
@@ -12,7 +18,11 @@ class QueryingWorkflow(RAGWorkflow):
         super().__init__()
 
     @step
-    async def retrieve(self, ctx: Context, ev: StartEvent) -> RetrieverEvent | None:
+    async def query_rewrite(self, ctx: Context, ev: StartEvent) -> QueryRewriteEvent:
+        pass
+
+    @step
+    async def retrieve(self, ctx: Context, ev: StartEvent) -> RetrieveEvent | None:
         query = ev.get("query")
         if not query:
             return None
@@ -32,10 +42,20 @@ class QueryingWorkflow(RAGWorkflow):
 
         nodes = await retriever.aretrieve(query)
         print(f"Retrieved {len(nodes)} nodes.")
-        return RetrieverEvent(nodes=nodes)
+        return RetrieveEvent(nodes=nodes)
 
     @step
-    async def rerank(self, ctx: Context, ev: RetrieverEvent) -> RerankEvent:
+    async def metadata_replacement(
+        self, ctx: Context, ev: RetrieveEvent
+    ) -> MetadataReplacementEvent:
+        replacer = MetadataReplacementPostProcessor(target_metadata_key="window")
+        query = await ctx.get("query", default=None)
+        new_nodes = replacer.postprocess_nodes(ev.nodes, query_str=query)
+        print(f"MetadataReplacemented nodes to {len(new_nodes)}")
+        return MetadataReplacementEvent(nodes=new_nodes)
+
+    @step
+    async def rerank(self, ctx: Context, ev: MetadataReplacementEvent) -> RerankEvent:
         ranker = LLMRerank(choice_batch_size=5, top_n=3, llm=self.llm)
         query = await ctx.get("query", default=None)
         new_nodes = ranker.postprocess_nodes(ev.nodes, query_str=query)

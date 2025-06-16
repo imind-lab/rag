@@ -6,6 +6,7 @@ from llama_index.core import (
 from llama_index.core.workflow import Workflow
 from llama_index.embeddings.fastembed import FastEmbedEmbedding
 from llama_index.vector_stores.qdrant import QdrantVectorStore
+from llama_index.core.node_parser import SentenceWindowNodeParser
 from llama_index.llms.openai_like import OpenAILike
 
 from qdrant_client import QdrantClient, AsyncQdrantClient
@@ -58,3 +59,8 @@ class RAGWorkflow(Workflow):
         Settings.chunk_overlap = settings.embedding.chunk_overlap
         Settings.llm = self.llm
         Settings.embed_model = self.embed_model
+        Settings.node_parser = SentenceWindowNodeParser.from_defaults(
+            window_size=3,
+            window_metadata_key="window",
+            original_text_metadata_key="original_text",
+        )

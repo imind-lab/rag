@@ -1,6 +1,6 @@
 import asyncio
 import time
-from imind_rag.workflow.indexing import IndexingWorkflow
+from imind_ai.rag.workflow.indexing import IndexingWorkflow
 
 
 async def main():

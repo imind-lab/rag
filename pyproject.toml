@@ -21,3 +21,7 @@ imind-rag = "imind_rag:main"
 [build-system]
 requires = ["uv_build>=0.7.12,<0.8"]
 build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "imind_ai"
+module-root = ""

@@ -11,7 +11,7 @@ from llama_index.llms.openai_like import OpenAILike
 
 from qdrant_client import QdrantClient, AsyncQdrantClient
 
-from imind_rag.config.settings import get_settings
+from imind_ai.rag.config.settings import get_settings
 
 
 class RAGWorkflow(Workflow):

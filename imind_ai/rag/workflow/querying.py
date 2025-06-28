@@ -30,12 +30,13 @@ class QueryingWorkflow(RAGWorkflow):
         query_bundle = hyde(ev.query)
         print(f"query_bundle embedding len: {len(query_bundle.embedding_strs)}")
         new_query = query_bundle.embedding_strs[0]
-        await ctx.set("query", new_query)
+        await ctx.set("query", query)
+        await ctx.set("hyde", new_query)
         return QueryRewriteEvent()
 
     @step
-    async def retrieve(self, ctx: Context, ev: StartEvent) -> RetrieveEvent:
-        query = await ctx.get("query", default=None)
+    async def retrieve(self, ctx: Context, ev: QueryRewriteEvent) -> RetrieveEvent:
+        query = await ctx.get("hyde", default=None)
 
         index = VectorStoreIndex.from_vector_store(
             self.vector_store, storage_context=self.storage_context
@@ -57,7 +58,7 @@ class QueryingWorkflow(RAGWorkflow):
         self, ctx: Context, ev: RetrieveEvent
     ) -> MetadataReplacementEvent:
         replacer = MetadataReplacementPostProcessor(target_metadata_key="window")
-        query = await ctx.get("query", default=None)
+        query = await ctx.get("hyde", default=None)
         new_nodes = replacer.postprocess_nodes(ev.nodes, query_str=query)
         print(f"MetadataReplacemented nodes to {len(new_nodes)}")
         return MetadataReplacementEvent(nodes=new_nodes)
@@ -65,7 +66,7 @@ class QueryingWorkflow(RAGWorkflow):
     @step
     async def rerank(self, ctx: Context, ev: MetadataReplacementEvent) -> RerankEvent:
         ranker = LLMRerank(choice_batch_size=5, top_n=3, llm=self.llm)
-        query = await ctx.get("query", default=None)
+        query = await ctx.get("hyde", default=None)
         new_nodes = ranker.postprocess_nodes(ev.nodes, query_str=query)
         print(f"Reranked nodes to {len(new_nodes)}")
         return RerankEvent(nodes=new_nodes)
